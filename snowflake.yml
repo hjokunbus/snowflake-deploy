@@ -1,0 +1,50 @@
+---
+- name: Install TOR Snowflake as a service on your RaspberryPi
+  hosts: snowflakes
+
+  tasks:
+    - name: Update system
+      become: true
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+        upgrade: full
+
+    - name: Install necessary packages
+      become: true
+      apt:
+        pkg:
+          - git
+          - golang
+
+    - name: Clone Snowflake repository
+      git:
+        repo: https://git.torproject.org/pluggable-transports/snowflake.git
+        dest: "{{ ansible_user_dir }}/snowflake"
+        version: master
+
+    - name: Build Code
+      command:
+        chdir: "{{ ansible_user_dir }}/snowflake/proxy"
+        cmd: go build
+        creates: "{{ ansible_user_dir }}/snowflake/proxy/proxy"
+
+    - name: Install service
+      become: true
+      template:
+        src: snowflake.service.j2
+        dest: /lib/systemd/system/snowflake.service
+        mode: '0644'
+
+    - file:
+        dest: /etc/systemd/system/multi-user.target.wants/snowflake.service
+        src: /lib/systemd/system/snowflake.service
+        state: link
+      become: true
+
+    - name: Start snowflake service
+      become: true
+      service:
+        name: snowflake
+        state: started
+...

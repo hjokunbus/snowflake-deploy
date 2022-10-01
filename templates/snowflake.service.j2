@@ -1,0 +1,10 @@
+[Unit]
+Description=TOR snowflake proxy
+
+[Service]
+Type=simple
+User={{ ansible_user }}
+ExecStart=nohup {{ ansible_user_dir }}/snowflake/proxy/proxy > {{ ansible_user_dir }}/snowflake.log
+
+[Install]
+WantedBy=multi-user.target
